@@ -1,0 +1,368 @@
+we can directly upload nft on opensea but will have to abide by their
+smart contract.
+erc1155 vs erc 721
+first we will download the dependencies and the softwares required
+then write the smart contract using ERC-721 token standard.
+we will deploy to polygon test network
+host our file on ipfs and 
+configure our meta data, mint our nft and list on opensea
+
+nodejs and visual studio code
+truffle and ganache
+development environment, to test and deploy
+
+ganache: personal blockchain
+
+first download meta mask
+register and create and account and setup on the test network
+save the mnemonic
+https://wiki.polygon.technology/docs/develop/metamask/config-polygon-on-metamask
+
+we can add matic for testing
+copy address and paste it in
+https://faucet.polygon.technology/
+
+ganache download https://trufflesuite.com/ganache/
+it is a personal/testing blockchain
+
+then setup up the project folder and do npm init -y
+now install truffle, using npm i truffle
+
+now we have installed truffle but we need to create a template of truffle in our 
+project folder
+
+npx truffle init
+going to make all the folders
+
+we have contracts, migrations etc...
+we have config file, it used to specify the setup for our project, 
+our network which we are connecting to and etc.
+
+we will make 2 more folders now, scrips and data
+ 
+now in our config file, everything is commented
+i want my development environment to be there so i will de comment it
+and add my ip and port number
+
+now just have to connect project folder to ganache
+to do that we will create our own personal workspace 
+and add the project, so the truffle config file
+
+we will not be writing all the code from scratch, we will use 
+pre existing code from open zeppelin
+
+we will just import those and use in our project
+we have to install those so
+npm install @openzeppelin/contracts
+
+see in node modules
+now lets jump onto writing our smart contract
+create mintContract.sol file in contracts folder
+
+.sol is just an extension which will tell us that this file is written in solidity
+
+lets first try to understand what we are trying to achieve from this contract
+this contract should have a function where will be passing the url to my artwork
+and in return it should mint the nft to my account and we should also make sure that only
+the owner is able to execute this function
+in return it should give me the unique token_id that it generated
+
+additionally what we want is that for each of the token id being generated , it should be 
+associated to a particular url
+
+now writing our contract
+the first line will be the pragma solidity line.
+it is a directive that specified the compiler version to be used for current solidity file.
+
+pragma solidity >=0.4.16 < 0.9.0;
+this ensures that our code will not break if in the future there is an update
+
+now we will import some of the functionality that is pre existing in open zeppelin library
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol"; this is the implementation of 
+erc 721 token standard
+import "@openzeppelin/contracts/utils/Counters.sol";
+library that provides a counter that can be incremented by 1
+import "@openzeppelin/contracts/access/Ownable.sol";
+only the owner should have the authority to mind the nft
+import "@openzeppelin\contracts\token\ERC721\extensions\ERC721URIStorage.sol";
+mapping that i want to create between the token id and the url that i am going to pass
+for that we are going to use the setURI function from this file.
+
+
+
+The is keyword (not "Is") is used for inheritance in Solidity.
+now lets move on
+i want it to inherit the properties methods and variables from these 2 contracts 
+we will create a private variable called tokenId which will be storing the number 
+of nft's that we have minted so that for the next nft, it will assign a new token id.
+
+we can go and check in counters.sol, from there we copy using code
+using Counters for Counters.Counter;
+and we create an instance or a new variable
+counters.Counter private tokenId
+we will make it private
+
+now will be using a constructor and from the ERC721 token standadard and we will pass 2 variables
+first is my name of nft and the second is the symbol
+constructor() ERC721("myNFT","NFT"){
+
+    }
+It's an optional function which initializes state variables of the contract. 
+now final thing is to write the mintnft function
+
+we need to pass the url of our artwork, 
+function mindNFT(string memory tokenURI) public onlyOwner returns (uint256){
+
+Strings in Solidity is a data type used to represent/store a set of characters. 
+Much like RAM, Memory in Solidity is a temporary place to store data
+we will make it public and make it so that only owner can call the function
+
+that token id variable that we created is not initialized, so if we don't 
+it will take 0 as value
+
+tokenId.increment()
+
+wheneve we mint a new nft it should increment the value by 1.
+now we create another variable which will store the current token id
+of any url we are going to pass
+uint256 newID = tokenId.current()
+
+
+now we go to erc721 contract, there is a _mint function
+2 parameters, address and tokenid
+address is where we want to mint it.
+_mint(msg.sender,newId);
+
+next thing we want is to store the mapping of the url.
+_setTokenURI funciton in ERC721URIStorage
+it takes tokenid and tokenuri
+_setTokenURI(newId, tokenURI);
+
+now lastly we return the newId
+return newId;
+
+contract mintContract is ERC721URIStorage,Ownable{
+    using Counters for Counters.Counter;
+    counters.Counter private tokenId
+
+    constructor() ERC721("myNFT","NFT"){
+
+    }
+
+    function mintNFT(string memory tokenURI) public onlyOwner returns (uint256){
+        tokenId.increment();
+        uint256 newID = tokenId.current();
+        _mint(msg.sender,newId);
+        _setTokenURI(newId, tokenURI);
+        return newId;
+    }
+
+}
+
+now we are finally done with our smart contract.
+its time to deploy on ganache
+will be using truffle migrationsit helps us to deploy
+our smart contracts to the blockchain
+
+we make a file in migrations folder.
+we will make modifications to it.
+they are prefaced by a number
+
+we tell the order in which to deploy the contracts
+first we will tell truffle which contract
+we want it to interact with
+const mintContract = artifacts.require("mintContract");
+
+next module.exports tell nodejs which bit of code
+we want to export 
+ so other files can access it
+ module.exports = function(deployer){
+    deployer.deploy(mintContract);
+};
+
+now time to deploy our contract
+
+open terminal
+npm install -g truffle
+and use gitbash for running truffle console
+
+now when truffle is working, we use the command migrate to deploy
+
+we should get a summary at the end with a cost
+
+we get an account in terminal and in ganache the cost is current
+whenever we migrate it uses the first account in ganache
+
+there is a contract address as well
+
+now we will create a new instance of our contract
+
+if we get undefined, it has created an instance
+
+contract.address we get an address
+if we go to transactions in ganache 
+we see the created contract.
+
+we also creatged a constructor in mint file
+with name and symbol
+contract.name()
+contract.symbol()
+
+we can also check who is the owner of this contract
+contract.owner()
+we get the owner address
+which is also the first address in ganache
+
+TESTS:
+good practice
+
+if we deploy something on blockchain, it is immutable.
+skipped this*****
+
+
+now to deploy on the polygon network
+
+we install dotenv to keep our mnemonic secret
+npm install dotenv
+
+now go to project folder and in our root directory
+create a file called .env
+
+MNEMONIC = ""
+
+next thing is to install hd wallet provider
+
+this is needed because when we deploy our contract, we need to 
+sign the transaction we are trying to make with our account
+for that we need the private key, that is handled by mnemonic
+account management process is handled by a provider
+this is hdwallet
+
+npm install @truffle/hdwallet-provider
+
+next is changes to config file, as we want to connect to polygon network
+
+https://wiki.polygon.technology/docs/develop/truffle/
+copy the configuration from matic to ending flower bracket
+
+polygonTestNet: {
+      provider: () => new HDWalletProvider(mnemonic, `https://rpc-mumbai.maticvigil.com`),
+      network_id: 80001,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true
+    },
+
+and paste in the config file
+
+also have to add the require dotenv
+require('dotenv').config()
+amd uncomment the HDWalletProvider line
+
+also uncomment the menomic line and instead of rhs
+const mnemonic = process.env.MNEMONIC;
+
+mnemonic spelling should be same as what we have in .env
+
+now lets try to deploy our smart contract to polygon test network
+truffle migrate --network polygonTestNet
+if successful we will get summary at the end.
+
+our contract got deployed on the polygon test network
+
+copy the contract address and paste in mumbai.polygonscan.com
+we should get it there as a result
+
+details
+
+save this contract address.
+
+now we have to configure the meta data of our nft.
+
+writing the script that will mint our nft.
+
+the tokenURI in mintNFT function should point to our
+nft's metadata
+
+it should be a json
+and since we will not be uploading our file to the blockchain 
+it will cost a lot of money
+we will host the nft on ipfs and keep the meta data on the blockchain
+
+external link, and all details
+
+we will be using pinata and ipfs.
+
+sign up for free on pinata
+and upload your file
+cid is a label that is used to point to the material in ipfs
+
+copy the cid
+ipfs.io/ipfs/QmNmroNTobimrwv5cgKSwb8hCMJsxbo5GV1G2xRmQtxR3W
+
+now go to data folder
+create a json file
+boiler plate.
+{
+    "attributes": [
+        {
+            "trait_type": "Color",
+            "value": "Black"
+        },
+        {
+            "trait_type": "Type",
+            "value": "Text"
+        }
+    ],
+    "description": "Text : Evolving India",
+    "image": "https://ipfs.io/ipfs/QmNmroNTobimrwv5cgKSwb8hCMJsxbo5GV1G2xRmQtxR3W",
+    "name": "Code For India"
+  }
+
+upload this file to pinata
+
+
+now to write our js file that will actually mint our nft
+
+in scripts folder
+new file called MintingNFT.js
+
+web3 is basically a collection of js libraries that 
+helpsus to interact with eth blockchain
+
+data , bytecode, code that blockchain understands
+converted when it deployed the contract
+
+abi acts as intermediatery between js code and bytecode.
+
+function called deploy,
+we get our accounts 
+const accounts = await web3.eth.getAccounts();
+
+we connect from the required account
+console.log('Attempting to deploy from account ', accounts[0]);
+
+we need to create an instance of our smart contract in order to call 
+our mindNFT function.
+
+const contract = await new web3.eth.Contract(abiArray,contract_address);
+
+
+const tokenURI = 'https://ipfs.io/ipfs/QmNmroNTobimrwv5cgKSwb8hCMJsxbo5GV1G2xRmQtxR3W';
+    await contract.methods.mintNFT(tokenURI).send({from: accounts[0]});
+
+    console.log('minted successfully');
+
+
+
+
+node scripts/MintingNFT.js 
+we should get the log output
+
+now go to opensea
+connect with metamask
+
+
+
+royal swap raw motor scan visit riot worth erase bomb inch stage

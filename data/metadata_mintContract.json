@@ -1,0 +1,15 @@
+{
+    "attributes": [
+        {
+            "trait_type": "Color",
+            "value": "Black"
+        },
+        {
+            "trait_type": "Type",
+            "value": "Text"
+        }
+    ],
+    "description": "Text : Evolving India",
+    "image": "https://ipfs.io/ipfs/QmYMd5CgDTcQQ7UDD12hC5tHxr1RBtbF2G8xGXv73eUeuA",
+    "name": "Code For India"
+  }
